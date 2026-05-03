@@ -2,7 +2,7 @@
 
 import logging
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 from typing import Optional, List, Tuple, Dict, Any
 from dataclasses import dataclass, asdict
 from pathlib import Path
