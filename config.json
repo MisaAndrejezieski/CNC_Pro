@@ -1,0 +1,18 @@
+{
+    "dimensoes": {
+        "largura": 100.0,
+        "altura": 100.0
+    },
+    "resolucao": 10.0,
+    "profundidade": 3.0,
+    "passo_corte": 0.5,
+    "velocidade_corte": 800.0,
+    "velocidade_rapida": 3500.0,
+    "limiar": 128,
+    "diametro_ferramenta": 0.4,
+    "sobreposicao": 0.4,
+    "altura_seguranca": 5.0,
+    "estrategia": "zig_zag",
+    "suavizar": false,
+    "ultimos_arquivos": []
+}
