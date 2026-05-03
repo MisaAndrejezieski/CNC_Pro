@@ -1,0 +1,4 @@
+2026-05-03 12:37:08,151 - src.main - INFO - Aplicação iniciada com sucesso
+2026-05-03 12:38:13,587 - src.core.gerador - INFO - Gerador inicializado: resolução=10.0 passos/mm
+2026-05-03 12:38:13,854 - src.core.gerador - INFO - Gerando 6 passes, profundidade final: -3.0mm
+2026-05-03 12:38:14,461 - src.core.gerador - INFO - G-code gerado: 436530 linhas
