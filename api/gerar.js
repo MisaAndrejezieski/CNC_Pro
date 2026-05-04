@@ -1,4 +1,6 @@
-// api/gerar.js - Processamento REAL da imagem
+// api/gerar.js - Usando Sharp (compatível com Vercel)
+
+import sharp from 'sharp';
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -27,35 +29,30 @@ export default async function handler(req, res) {
             return res.status(400).json({ success: false, error: 'Nenhuma imagem fornecida' });
         }
         
-        // Processa a imagem usando canvas
-        const { createCanvas, loadImage } = await import('canvas');
-        
         // Decodifica a imagem base64
         const base64Data = imagem.split(',')[1];
         const imageBuffer = Buffer.from(base64Data, 'base64');
         
-        // Carrega a imagem
-        const img = await loadImage(imageBuffer);
-        
-        // Calcula dimensões em pixels baseado na resolução
+        // Calcula dimensões em pixels
         const passosPorMm = resolucao;
         const larguraPx = Math.max(1, Math.floor(largura * passosPorMm));
         const alturaPx = Math.max(1, Math.floor(altura * passosPorMm));
         
-        // Redimensiona a imagem para as dimensões de corte
-        const canvas = createCanvas(larguraPx, alturaPx);
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, larguraPx, alturaPx);
+        // Processa a imagem com Sharp
+        const processedImage = await sharp(imageBuffer)
+            .resize(larguraPx, alturaPx, { fit: 'fill' })
+            .grayscale()
+            .raw()
+            .toBuffer();
         
-        // Obtém os pixels
-        const imageData = ctx.getImageData(0, 0, larguraPx, alturaPx);
-        const pixels = imageData.data;
+        // Obtém os pixels (cada byte é um valor de 0-255)
+        const pixels = new Uint8Array(processedImage);
         
         // Calcula o passo em mm por pixel
         const passoX = largura / larguraPx;
         const passoY = altura / alturaPx;
         
-        // Gera o G-code baseado na imagem
+        // Gera o G-code
         const gcode = [];
         const dataHora = new Date().toLocaleString('pt-BR');
         
@@ -94,13 +91,9 @@ export default async function handler(req, res) {
             for (let y = 0; y < alturaPx; y++) {
                 // Alterna direção a cada linha (zig-zag)
                 if (y % 2 === 0) {
-                    // Linha par: esquerda → direita
                     for (let x = 0; x < larguraPx; x++) {
-                        const idx = (y * larguraPx + x) * 4;
-                        const r = pixels[idx];
-                        const g = pixels[idx + 1];
-                        const b = pixels[idx + 2];
-                        const brilho = (r + g + b) / 3;
+                        const idx = y * larguraPx + x;
+                        const brilho = pixels[idx];
                         const deveCortar = brilho < limiar;
                         
                         if (deveCortar) {
@@ -124,13 +117,9 @@ export default async function handler(req, res) {
                         }
                     }
                 } else {
-                    // Linha ímpar: direita → esquerda
                     for (let x = larguraPx - 1; x >= 0; x--) {
-                        const idx = (y * larguraPx + x) * 4;
-                        const r = pixels[idx];
-                        const g = pixels[idx + 1];
-                        const b = pixels[idx + 2];
-                        const brilho = (r + g + b) / 3;
+                        const idx = y * larguraPx + x;
+                        const brilho = pixels[idx];
                         const deveCortar = brilho < limiar;
                         
                         if (deveCortar) {
@@ -156,7 +145,6 @@ export default async function handler(req, res) {
                 }
             }
             
-            // Garante que a ferramenta está levantada no final do passe
             if (emCorte) {
                 gcode.push(`G0 Z5.000`);
                 movimentosRapidos++;
