@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNC Pro - Gerador de G-code Online</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            background: linear-gradient(90deg, #00ff88, #00aaff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            color: #888;
+            margin-top: 10px;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .panel {
+            background: rgba(30,30,46,0.9);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .panel h2 {
+            margin-bottom: 20px;
+            color: #00ff88;
+        }
+        
+        .upload-area {
+            border: 2px dashed #00aaff;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-area:hover {
+            border-color: #00ff88;
+            background: rgba(0,255,136,0.1);
+        }
+        
+        .upload-area.drag-over {
+            border-color: #00ff88;
+            background: rgba(0,255,136,0.2);
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #aaa;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #333;
+            border-radius: 5px;
+            color: #fff;
+        }
+        
+        button {
+            background: linear-gradient(90deg, #00ff88, #00aaff);
+            color: #fff;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .gcode-output {
+            background: #1a1a2e;
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 400px;
+            overflow: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff88;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00aaff);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛠️ CNC Pro</h1>
+            <p class="subtitle">Gerador de G-code profissional - Versão Online</p>
+        </header>
+        
+        <div class="main-grid">
+            <!-- Painel Esquerdo -->
+            <div class="panel">
+                <h2>📸 Entrada</h2>
+                
+                <div class="upload-area" id="uploadArea">
+                    <div>📤 Clique ou arraste uma imagem aqui</div>
+                    <div style="font-size: 12px; margin-top: 10px;">PNG, JPG, JPEG, BMP</div>
+                </div>
+                <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                <img id="preview" class="preview-image" style="display: none;">
+                
+                <div style="margin-top: 20px;">
+                    <div class="form-group">
+                        <label>📏 Largura (mm)</label>
+                        <input type="number" id="largura" value="100" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label>📏 Altura (mm)</label>
+                        <input type="number" id="altura" value="100" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label>⚙️ Profundidade (mm)</label>
+                        <input type="number" id="profundidade" value="3" step="0.5">
+                    </div>
+                    <div class="form-group">
+                        <label>🔧 Resolução (passos/mm)</label>
+                        <input type="number" id="resolucao" value="10" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label>🎨 Limiar (0-255)</label>
+                        <input type="range" id="limiar" min="0" max="255" value="128">
+                        <span id="limiarValue">128</span>
+                    </div>
+                </div>
+                
+                <button id="gerarBtn" style="width: 100%; margin-top: 20px;">🚀 GERAR G-CODE</button>
+                
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+            
+            <!-- Painel Direito -->
+            <div class="panel">
+                <h2>📋 Resultado</h2>
+                
+                <div class="stats" id="stats" style="display: none;">
+                    <div class="stat-card">
+                        <div>📄 Linhas</div>
+                        <div class="stat-value" id="totalLinhas">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div>✂️ Cortes</div>
+                        <div class="stat-value" id="movimentosCorte">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div>💨 Rápidos</div>
+                        <div class="stat-value" id="movimentosRapidos">0</div>
+                    </div>
+                </div>
+                
+                <div class="gcode-output" id="gcodeOutput">
+                    <p style="color: #888; text-align: center;">Aguardando geração...</p>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button id="baixarBtn" style="flex: 1;" disabled>💾 Baixar G-code</button>
+                    <button id="copiarBtn" style="flex: 1;" disabled>📋 Copiar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+        const gerarBtn = document.getElementById('gerarBtn');
+        const baixarBtn = document.getElementById('baixarBtn');
+        const copiarBtn = document.getElementById('copiarBtn');
+        const gcodeOutput = document.getElementById('gcodeOutput');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const statsDiv = document.getElementById('stats');
+        const limiar = document.getElementById('limiar');
+        const limiarValue = document.getElementById('limiarValue');
+        
+        let currentImage = null;
+        
+        limiar.addEventListener('input', () => {
+            limiarValue.textContent = limiar.value;
+        });
+        
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleImage(file);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                handleImage(e.target.files[0]);
+            }
+        });
+        
+        function handleImage(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentImage = e.target.result;
+                preview.src = currentImage;
+                preview.style.display = 'block';
+                uploadArea.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        gerarBtn.addEventListener('click', async () => {
+            if (!currentImage) {
+                alert('Selecione uma imagem primeiro!');
+                return;
+            }
+            
+            gerarBtn.disabled = true;
+            progressBar.style.display = 'block';
+            progressFill.style.width = '30%';
+            
+            const data = {
+                imagem: currentImage,
+                largura: document.getElementById('largura').value,
+                altura: document.getElementById('altura').value,
+                profundidade: document.getElementById('profundidade').value,
+                resolucao: document.getElementById('resolucao').value,
+                limiar: limiar.value
+            };
+            
+            try {
+                progressFill.style.width = '60%';
+                const response = await fetch('/api/gerar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                progressFill.style.width = '90%';
+                const result = await response.json();
+                
+                if (result.success) {
+                    progressFill.style.width = '100%';
+                    gcodeOutput.innerHTML = `<pre style="margin: 0;">${result.gcode}</pre>`;
+                    baixarBtn.disabled = false;
+                    copiarBtn.disabled = false;
+                    
+                    document.getElementById('totalLinhas').textContent = result.linhas;
+                    statsDiv.style.display = 'grid';
+                    
+                    setTimeout(() => {
+                        progressBar.style.display = 'none';
+                    }, 1000);
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                alert('Erro: ' + error.message);
+                progressBar.style.display = 'none';
+            } finally {
+                gerarBtn.disabled = false;
+                progressFill.style.width = '0%';
+            }
+        });
+        
+        baixarBtn.addEventListener('click', () => {
+            window.location.href = '/api/baixar';
+        });
+        
+        copiarBtn.addEventListener('click', () => {
+            const gcodeText = gcodeOutput.innerText;
+            navigator.clipboard.writeText(gcodeText);
+            alert('G-code copiado para a área de transferência!');
+        });
+    </script>
+</body>
+</html>
