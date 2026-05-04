@@ -1,0 +1,10 @@
+# Ignorar arquivos desnecessários
+.venv/
+__pycache__/
+*.pyc
+.git/
+output/
+images/
+cnc_pro.log
+README.md
+.gitattributes
