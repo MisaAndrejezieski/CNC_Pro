@@ -1,105 +1,121 @@
-from http.server import BaseHTTPRequestHandler
-import json
-import base64
-from io import BytesIO
-from PIL import Image
+// api/gerar.js - API em Node.js para o Vercel
 
-class handler(BaseHTTPRequestHandler):
-    def do_OPTIONS(self):
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.end_headers()
+const { createCanvas, loadImage } = require('canvas');
+
+module.exports = async (req, res) => {
+    // CORS
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
-    def do_POST(self):
-        # CORS headers
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    
+    if (req.method !== 'POST') {
+        return res.status(405).json({ success: false, error: 'Método não permitido' });
+    }
+    
+    try {
+        const { imagem, largura, altura, profundidade, resolucao, limiar } = req.body;
         
-        try:
-            # Pega o tamanho do corpo
-            content_length = int(self.headers['Content-Length'])
-            post_data = self.rfile.read(content_length)
-            body = json.loads(post_data.decode('utf-8'))
+        if (!imagem) {
+            return res.status(400).json({ success: false, error: 'Nenhuma imagem fornecida' });
+        }
+        
+        // Decodifica a imagem base64
+        const base64Data = imagem.split(',')[1];
+        const imageBuffer = Buffer.from(base64Data, 'base64');
+        
+        // Carrega a imagem
+        const img = await loadImage(imageBuffer);
+        
+        // Cria canvas para processamento
+        const canvas = createCanvas(img.width, img.height);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        
+        // Obtém dados da imagem
+        const imageData = ctx.getImageData(0, 0, img.width, img.height);
+        const data = imageData.data;
+        
+        // Calcula dimensões em pixels
+        const passosPorMm = resolucao;
+        const larguraPx = Math.max(1, Math.floor(largura * passosPorMm));
+        const alturaPx = Math.max(1, Math.floor(altura * passosPorMm));
+        
+        // Redimensiona a imagem
+        const resizedCanvas = createCanvas(larguraPx, alturaPx);
+        const resizedCtx = resizedCanvas.getContext('2d');
+        resizedCtx.drawImage(canvas, 0, 0, larguraPx, alturaPx);
+        
+        const resizedData = resizedCtx.getImageData(0, 0, larguraPx, alturaPx).data;
+        
+        // Gera G-code
+        const gcode = [];
+        gcode.push('(CNC Pro - G-code Gerado Online)');
+        gcode.push(`(Dimensões: ${largura} x ${altura} mm)`);
+        gcode.push(`(Profundidade: ${profundidade} mm)`);
+        gcode.push(`(Resolução: ${resolucao} passos/mm)`);
+        gcode.push('');
+        gcode.push('G90 G21');
+        gcode.push('M3 S10000');
+        gcode.push('G0 Z5.000 F3500');
+        gcode.push('G0 X0 Y0');
+        gcode.push('');
+        
+        const passo = 1.0 / passosPorMm;
+        const profundidadeCorte = 0.5;
+        const numPasses = Math.max(1, Math.ceil(profundidade / profundidadeCorte));
+        const incremento = profundidade / numPasses;
+        
+        let movimentosCorte = 0;
+        let movimentosRapidos = 0;
+        
+        for (let p = 1; p <= numPasses; p++) {
+            const z = -(incremento * p);
+            gcode.push(`(Passe ${p}/${numPasses} Z: ${z.toFixed(3)} mm)`);
+            gcode.push('F800');
             
-            imagem = body.get('imagem')
-            largura = float(body.get('largura', 100))
-            altura = float(body.get('altura', 100))
-            profundidade = float(body.get('profundidade', 3))
-            resolucao = float(body.get('resolucao', 10))
-            limiar = int(body.get('limiar', 128))
-            
-            # Decodifica imagem
-            if ',' in imagem:
-                imagem = imagem.split(',')[1]
-            img_bytes = base64.b64decode(imagem)
-            img = Image.open(BytesIO(img_bytes)).convert('L')
-            
-            # Redimensiona
-            largura_px = max(1, int(largura * resolucao))
-            altura_px = max(1, int(altura * resolucao))
-            img = img.resize((largura_px, altura_px))
-            
-            # Binariza
-            pixels = img.getdata()
-            binario = [p < limiar for p in pixels]
-            passo = 1.0 / resolucao
-            
-            # Gera G-code
-            gcode = []
-            gcode.append(f"(CNC Pro)")
-            gcode.append(f"(Largura: {largura}mm, Altura: {altura}mm)")
-            gcode.append(f"(Profundidade: {profundidade}mm)")
-            gcode.append("G90 G21")
-            gcode.append("G0 Z5.0")
-            gcode.append("G0 X0 Y0")
-            
-            num_passes = max(1, int(profundidade / 0.5))
-            incremento = profundidade / num_passes
-            
-            for p in range(1, num_passes + 1):
-                z = -incremento * p
-                gcode.append(f"(Passe {p}/{num_passes} Z={z:.2f})")
-                gcode.append("F800")
+            for (let y = 0; y < alturaPx; y++) {
+                const xStart = y % 2 === 0 ? 0 : larguraPx - 1;
+                const xEnd = y % 2 === 0 ? larguraPx : -1;
+                const xStep = y % 2 === 0 ? 1 : -1;
                 
-                for y in range(altura_px):
-                    if y % 2 == 0:
-                        x_range = range(largura_px)
-                    else:
-                        x_range = range(largura_px - 1, -1, -1)
+                for (let x = xStart; x !== xEnd; x += xStep) {
+                    const idx = (y * larguraPx + x) * 4;
+                    const r = resizedData[idx];
+                    const g = resizedData[idx + 1];
+                    const b = resizedData[idx + 2];
+                    const brilho = (r + g + b) / 3;
+                    const cortar = brilho < limiar;
                     
-                    for x in x_range:
-                        idx = y * largura_px + x
-                        if idx < len(binario) and binario[idx]:
-                            x_mm = x * passo
-                            y_mm = y * passo
-                            gcode.append(f"G1 X{x_mm:.2f} Y{y_mm:.2f}")
-                            gcode.append(f"Z{z:.2f}")
-            
-            gcode.append("G0 Z5.0")
-            gcode.append("G0 X0 Y0")
-            gcode.append("M30")
-            
-            resultado = {
-                'success': True,
-                'gcode': '\n'.join(gcode),
-                'linhas': len(gcode)
+                    if (cortar) {
+                        const xMm = x * passo;
+                        const yMm = y * passo;
+                        gcode.push(`G1 X${xMm.toFixed(3)} Y${yMm.toFixed(3)} Z${z.toFixed(3)}`);
+                        movimentosCorte++;
+                    }
+                }
             }
-            
-            self.wfile.write(json.dumps(resultado).encode('utf-8'))
-            
-        except Exception as e:
-            resultado = {
-                'success': False,
-                'error': str(e)
-            }
-            self.wfile.write(json.dumps(resultado).encode('utf-8'))
-    
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-Type', 'text/plain')
-        self.end_headers()
-        self.wfile.write(b'API CNC Pro is running! Use POST method to generate G-code.')
+        }
+        
+        gcode.push('');
+        gcode.push('M5');
+        gcode.push('G0 Z5.000');
+        gcode.push('G0 X0 Y0');
+        gcode.push('M30');
+        
+        return res.status(200).json({
+            success: true,
+            gcode: gcode.join('\n'),
+            linhas: gcode.length,
+            movimentos_corte: movimentosCorte,
+            movimentos_rapidos: movimentosRapidos
+        });
+        
+    } catch (error) {
+        console.error('Erro:', error);
+        return res.status(500).json({ success: false, error: error.message });
+    }
+};
