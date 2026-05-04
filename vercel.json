@@ -1,11 +1,8 @@
 {
-  "installCommand": "pip install -r requirements.txt",
-  "buildCommand": "",
-  "outputDirectory": "static",
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/$1.py"
+      "dest": "/api/$1"
     },
     {
       "src": "/(.*)",
