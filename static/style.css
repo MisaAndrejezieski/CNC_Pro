@@ -1,31 +1,45 @@
 /* ============================================
-   CNC Pro - Layout Corrigido e Otimizado
+   CNC Pro - Design Moderno Profissional
+   Versão Corrigida - Sem Erros
    ============================================ */
 
-/* ========== VARIÁVEIS ========== */
+/* ========== VARIÁVEIS GLOBAIS ========== */
 :root {
+    /* Cores principais - Tema Dark Premium */
     --bg-primary: #0a0a0f;
     --bg-secondary: #111118;
     --bg-tertiary: #1a1a24;
     --bg-card: rgba(26, 26, 36, 0.95);
     
+    /* Cores de destaque */
     --accent-primary: #6366f1;
     --accent-primary-hover: #8183f4;
     --accent-secondary: #06b6d4;
     --accent-success: #10b981;
+    --accent-warning: #f59e0b;
     --accent-danger: #ef4444;
     
+    /* Gradientes */
     --gradient-primary: linear-gradient(135deg, #6366f1, #06b6d4);
+    --gradient-success: linear-gradient(135deg, #10b981, #34d399);
     
+    /* Cores de texto */
     --text-primary: #f1f5f9;
     --text-secondary: #94a3b8;
     --text-tertiary: #64748b;
     
+    /* Bordas */
     --border-light: rgba(99, 102, 241, 0.2);
     --border-medium: rgba(99, 102, 241, 0.1);
+    
+    /* Sombras */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.3);
 }
 
-/* ========== RESET ========== */
+/* ========== RESET GLOBAL ========== */
 * {
     margin: 0;
     padding: 0;
@@ -38,12 +52,32 @@ html, body {
 }
 
 body {
-    font-family: 'Inter', 'Segoe UI', sans-serif;
+    font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg-primary);
     color: var(--text-primary);
 }
 
-/* ========== APP ========== */
+/* ========== SCROLLBAR PERSONALIZADA ========== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--accent-primary);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-primary-hover);
+}
+
+/* ========== APP CONTAINER ========== */
 .app {
     display: flex;
     flex-direction: column;
@@ -64,6 +98,16 @@ header {
     z-index: 10;
 }
 
+header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--gradient-primary);
+}
+
 .logo {
     display: flex;
     align-items: baseline;
@@ -72,10 +116,12 @@ header {
 
 .logo h1 {
     font-size: 1.3rem;
+    font-weight: 700;
     background: var(--gradient-primary);
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
+    letter-spacing: -0.5px;
 }
 
 .version {
@@ -84,6 +130,7 @@ header {
     background: rgba(99, 102, 241, 0.2);
     border-radius: 20px;
     color: var(--accent-primary);
+    font-weight: 500;
 }
 
 .badge.online {
@@ -100,9 +147,11 @@ header {
     height: 8px;
     background: var(--accent-success);
     border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent-success);
+    animation: pulse 2s infinite;
 }
 
-/* ========== LAYOUT PRINCIPAL - FLEX CORRETO ========== */
+/* ========== LAYOUT PRINCIPAL ========== */
 .main-layout {
     display: flex;
     flex: 1;
@@ -110,11 +159,12 @@ header {
     min-height: 0;
 }
 
-/* ========== SIDEBAR - LARGURA FIXA ========== */
+/* ========== SIDEBAR ========== */
 .sidebar {
     width: 320px;
     flex-shrink: 0;
     background: var(--bg-card);
+    backdrop-filter: blur(10px);
     border-right: 1px solid var(--border-medium);
     display: flex;
     flex-direction: column;
@@ -139,12 +189,16 @@ header {
     position: sticky;
     top: 0;
     background: var(--bg-card);
+    backdrop-filter: blur(10px);
+    z-index: 10;
 }
 
 .sidebar-header h3 {
     font-size: 0.75rem;
     text-transform: uppercase;
+    letter-spacing: 1.5px;
     color: var(--text-tertiary);
+    font-weight: 600;
 }
 
 .toggle-sidebar {
@@ -154,6 +208,14 @@ header {
     padding: 4px 8px;
     cursor: pointer;
     color: var(--text-secondary);
+    font-size: 0.8rem;
+    transition: all 0.2s;
+}
+
+.toggle-sidebar:hover {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
 }
 
 .sidebar-content {
@@ -167,6 +229,12 @@ header {
     padding: 12px;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 12px;
+    border: 1px solid var(--border-medium);
+    transition: all 0.2s;
+}
+
+.section:hover {
+    border-color: var(--border-light);
 }
 
 .section-title {
@@ -175,9 +243,13 @@ header {
     letter-spacing: 1px;
     color: var(--accent-primary);
     margin-bottom: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* ========== UPLOAD ========== */
+/* ========== UPLOAD AREA ========== */
 .upload-area {
     border: 1px dashed var(--border-light);
     border-radius: 10px;
@@ -185,21 +257,26 @@ header {
     text-align: center;
     cursor: pointer;
     transition: all 0.2s;
+    background: rgba(0, 0, 0, 0.2);
 }
 
 .upload-area:hover {
     border-color: var(--accent-primary);
     background: rgba(99, 102, 241, 0.1);
+    transform: translateY(-1px);
 }
 
 .upload-area span {
     font-size: 0.85rem;
     display: block;
+    font-weight: 500;
 }
 
 .upload-area small {
     font-size: 0.7rem;
     color: var(--text-tertiary);
+    display: block;
+    margin-top: 4px;
 }
 
 .preview-container {
@@ -210,6 +287,7 @@ header {
 .preview-container img {
     width: 100%;
     border-radius: 8px;
+    border: 1px solid var(--border-light);
 }
 
 .remove-img {
@@ -223,10 +301,16 @@ header {
     height: 24px;
     color: white;
     cursor: pointer;
+    font-weight: bold;
     font-size: 12px;
+    transition: all 0.2s;
 }
 
-/* ========== INPUTS ========== */
+.remove-img:hover {
+    transform: scale(1.1);
+}
+
+/* ========== INPUT GROUPS ========== */
 .input-group {
     display: flex;
     align-items: center;
@@ -238,6 +322,7 @@ header {
     width: 120px;
     font-size: 0.8rem;
     color: var(--text-secondary);
+    font-weight: 500;
 }
 
 .input-group input {
@@ -248,11 +333,13 @@ header {
     padding: 6px 10px;
     color: white;
     font-size: 0.85rem;
+    transition: all 0.2s;
 }
 
 .input-group input:focus {
     outline: none;
     border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
 }
 
 .input-group .unit {
@@ -261,13 +348,16 @@ header {
     color: var(--text-tertiary);
 }
 
-/* ========== RANGE SLIDER ========== */
+/* ========== RANGE SLIDER COMPLETO ========== */
 input[type="range"] {
     flex: 1;
     height: 4px;
     -webkit-appearance: none;
-    background: linear-gradient(90deg, #6366f1, #06b6d4);
-    border-radius: 2px;
+    appearance: none;
+    background: #2d2d3a;
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
 }
 
 input[type="range"]:focus {
@@ -276,12 +366,35 @@ input[type="range"]:focus {
 
 input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 14px;
-    height: 14px;
-    background: #6366f1;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--accent-primary);
     border-radius: 50%;
-    border: 2px solid white;
     cursor: pointer;
+    border: 2px solid white;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    background: var(--accent-primary-hover);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+}
+
+input[type="range"]::-moz-range-track {
+    height: 4px;
+    background: #2d2d3a;
+    border-radius: 4px;
 }
 
 /* ========== RADIO GROUP ========== */
@@ -300,10 +413,18 @@ input[type="range"]::-webkit-slider-thumb {
     background: rgba(0, 0, 0, 0.3);
     border-radius: 20px;
     cursor: pointer;
+    transition: all 0.2s;
+}
+
+.radio-group label:hover {
+    background: rgba(99, 102, 241, 0.2);
 }
 
 .radio-group input {
+    width: 16px;
+    height: 16px;
     accent-color: var(--accent-primary);
+    cursor: pointer;
 }
 
 /* ========== INFO TEXT ========== */
@@ -333,11 +454,12 @@ input[type="range"]::-webkit-slider-thumb {
     font-weight: bold;
     cursor: pointer;
     transition: all 0.2s;
+    font-size: 0.85rem;
 }
 
 .btn-primary:hover {
     transform: translateY(-1px);
-    filter: brightness(1.05);
+    box-shadow: var(--shadow-glow);
 }
 
 .btn-secondary {
@@ -348,6 +470,7 @@ input[type="range"]::-webkit-slider-thumb {
     color: var(--text-secondary);
     cursor: pointer;
     transition: all 0.2s;
+    font-size: 0.85rem;
 }
 
 .btn-secondary:hover {
@@ -355,7 +478,7 @@ input[type="range"]::-webkit-slider-thumb {
     color: var(--accent-primary);
 }
 
-/* ========== MAIN AREA - OCUPA TODO ESPAÇO RESTANTE ========== */
+/* ========== MAIN AREA ========== */
 .main-area {
     flex: 1;
     display: flex;
@@ -376,15 +499,18 @@ input[type="range"]::-webkit-slider-thumb {
 .viewer-toolbar {
     padding: 8px 16px;
     background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-shrink: 0;
+    border-bottom: 1px solid var(--border-medium);
 }
 
 .viewer-title {
     font-size: 0.75rem;
     color: var(--text-tertiary);
+    font-weight: 500;
 }
 
 .viewer-controls {
@@ -400,11 +526,13 @@ input[type="range"]::-webkit-slider-thumb {
     color: var(--text-secondary);
     cursor: pointer;
     font-size: 0.7rem;
+    transition: all 0.2s;
 }
 
 .viewer-controls button:hover {
     border-color: var(--accent-primary);
     color: var(--accent-primary);
+    transform: translateY(-1px);
 }
 
 #canvas-container {
@@ -422,15 +550,17 @@ input[type="range"]::-webkit-slider-thumb {
     transform: translate(-50%, -50%);
     text-align: center;
     color: var(--text-tertiary);
+    pointer-events: none;
 }
 
 .viewer-placeholder span {
     font-size: 48px;
     display: block;
     margin-bottom: 10px;
+    opacity: 0.5;
 }
 
-/* ========== RESULTS ========== */
+/* ========== RESULTS CONTAINER ========== */
 .results-container {
     min-height: 200px;
     max-height: 280px;
@@ -463,6 +593,7 @@ input[type="range"]::-webkit-slider-thumb {
 .stat span {
     color: var(--accent-primary);
     font-weight: bold;
+    margin-right: 2px;
 }
 
 .results-actions {
@@ -477,17 +608,19 @@ input[type="range"]::-webkit-slider-thumb {
     border-radius: 6px;
     cursor: pointer;
     font-size: 0.8rem;
+    transition: all 0.2s;
 }
 
 .icon-btn:hover {
     border-color: var(--accent-primary);
+    transform: translateY(-1px);
 }
 
 .gcode-output {
     flex: 1;
     overflow: auto;
     padding: 12px;
-    font-family: 'Courier New', monospace;
+    font-family: 'Courier New', 'JetBrains Mono', monospace;
     font-size: 10px;
     background: var(--bg-primary);
 }
@@ -495,6 +628,13 @@ input[type="range"]::-webkit-slider-thumb {
 .gcode-output pre {
     margin: 0;
     white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.placeholder {
+    color: var(--text-tertiary);
+    text-align: center;
+    padding: 40px;
 }
 
 /* ========== FOOTER ========== */
@@ -510,28 +650,32 @@ footer {
     flex-shrink: 0;
 }
 
-/* ========== SCROLLBAR ========== */
-::-webkit-scrollbar {
-    width: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: var(--bg-secondary);
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--accent-primary);
-    border-radius: 3px;
+/* ========== ANIMAÇÕES ========== */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 4px var(--accent-success);
+    }
+    50% {
+        opacity: 0.5;
+        box-shadow: 0 0 12px var(--accent-success);
+    }
 }
 
 /* ========== RESPONSIVIDADE ========== */
-@media (max-width: 1000px) {
+@media (max-width: 1200px) {
     .sidebar {
-        width: 280px;
+        width: 300px;
     }
     
     .results-stats {
         gap: 12px;
+    }
+}
+
+@media (max-width: 1000px) {
+    .sidebar {
+        width: 280px;
     }
 }
 
@@ -553,5 +697,10 @@ footer {
     
     .sidebar.collapsed {
         transform: translateX(-100%);
+        width: 0;
+    }
+    
+    .results-stats {
+        display: none;
     }
 }
