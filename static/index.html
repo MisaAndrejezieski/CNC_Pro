@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>CNC Pro - Gerador de G-code</title>
+    <title>CNC Pro - Gerador de G-code Profissional</title>
     <link rel="stylesheet" href="style.css">
+    
+    <!-- Importação do Three.js para visualização 3D -->
     <script type="importmap">
         {
             "imports": {
@@ -16,7 +18,7 @@
 </head>
 <body>
     <div class="app">
-        <!-- Header -->
+        <!-- ========== CABEÇALHO ========== -->
         <header>
             <div class="logo">
                 <h1>🛠️ CNC Pro</h1>
@@ -27,22 +29,23 @@
             </div>
         </header>
 
-        <!-- Main Content -->
+        <!-- ========== CORPO PRINCIPAL ========== -->
         <div class="main-layout">
-            <!-- Sidebar (colapsável) -->
+            
+            <!-- ========== BARRA LATERAL (CONFIGURAÇÕES) ========== -->
             <div class="sidebar" id="sidebar">
                 <div class="sidebar-header">
-                    <h3>⚙️ Configurações</h3>
+                    <h3>⚙️ CONFIGURAÇÕES</h3>
                     <button class="toggle-sidebar" id="toggleSidebar">◀</button>
                 </div>
                 
                 <div class="sidebar-content">
-                    <!-- Imagem -->
+                    <!-- SEÇÃO: IMAGEM -->
                     <div class="section">
-                        <div class="section-title">📸 Imagem</div>
+                        <div class="section-title">📸 IMAGEM</div>
                         <div class="upload-area" id="uploadArea">
-                            <span>📤 Clique ou arraste</span>
-                            <small>PNG, JPG, BMP</small>
+                            <span>📤 Clique ou arraste uma imagem</span>
+                            <small>PNG, JPG, JPEG, BMP</small>
                         </div>
                         <input type="file" id="fileInput" accept="image/*" style="display: none;">
                         <div class="preview-container" id="previewContainer" style="display: none;">
@@ -51,9 +54,9 @@
                         </div>
                     </div>
 
-                    <!-- Dimensões da Peça -->
+                    <!-- SEÇÃO: DIMENSÕES DA PEÇA -->
                     <div class="section">
-                        <div class="section-title">📏 Dimensões da Peça</div>
+                        <div class="section-title">📏 DIMENSÕES DA PEÇA</div>
                         <div class="input-group">
                             <label>Largura (X)</label>
                             <input type="number" id="largura" value="100" step="1">
@@ -71,9 +74,9 @@
                         </div>
                     </div>
 
-                    <!-- Ferramenta -->
+                    <!-- SEÇÃO: FERRAMENTA -->
                     <div class="section">
-                        <div class="section-title">🔧 Ferramenta</div>
+                        <div class="section-title">🔧 FERRAMENTA</div>
                         <div class="input-group">
                             <label>Diâmetro</label>
                             <input type="number" id="diametro" value="3.175" step="0.1">
@@ -86,21 +89,17 @@
                         </div>
                     </div>
 
-                    <!-- Estratégia de Usinagem -->
+                    <!-- SEÇÃO: ESTRATÉGIA DE USINAGEM -->
                     <div class="section">
-                        <div class="section-title">⚡ Estratégia</div>
+                        <div class="section-title">⚡ ESTRATÉGIA</div>
                         <div class="radio-group">
                             <label>
                                 <input type="radio" name="estrategia" value="pocket" checked>
-                                <span>🕳️ Escavação (Pocket)</span>
+                                <span>🕳️ Pocket (Escavação)</span>
                             </label>
                             <label>
                                 <input type="radio" name="estrategia" value="profile">
-                                <span>📐 Perfil (Profile)</span>
-                            </label>
-                            <label>
-                                <input type="radio" name="estrategia" value="contour">
-                                <span>🖼️ Contorno</span>
+                                <span>📐 Profile (Perfil)</span>
                             </label>
                             <label>
                                 <input type="radio" name="estrategia" value="zigzag">
@@ -109,31 +108,40 @@
                         </div>
                     </div>
 
-                    <!-- Passes -->
+                    <!-- SEÇÃO: PASSES DE PROFUNDIDADE -->
                     <div class="section">
-                        <div class="section-title">🔄 Passes de Profundidade</div>
+                        <div class="section-title">🔄 PASSES DE PROFUNDIDADE</div>
                         <div class="input-group">
                             <label>Profundidade por passe</label>
                             <input type="number" id="passoCorte" value="0.5" step="0.1" min="0.1">
                             <span class="unit">mm</span>
                         </div>
-                        <div class="info-text" id="infoPasses">
-                            Serão feitos 6 passes
-                        </div>
+                        <div class="info-text" id="infoPasses">Serão feitos 6 passes</div>
                     </div>
 
-                    <!-- Resolução -->
+                    <!-- SEÇÃO: RESOLUÇÃO -->
                     <div class="section">
-                        <div class="section-title">📐 Resolução</div>
+                        <div class="section-title">📐 RESOLUÇÃO</div>
                         <div class="input-group">
                             <label>Passos por mm</label>
                             <input type="range" id="resolucao" min="5" max="50" value="15">
                             <span id="resolucaoValor">15</span>
                         </div>
-                        <div class="info-text">Maior = mais detalhes</div>
+                        <div class="info-text">Maior = mais detalhes, arquivo maior</div>
                     </div>
 
-                    <!-- Ações -->
+                    <!-- SEÇÃO: LIMIAR -->
+                    <div class="section">
+                        <div class="section-title">🎨 LIMIAR</div>
+                        <div class="input-group">
+                            <label>Limiar (0-255)</label>
+                            <input type="range" id="limiar" min="0" max="255" value="128">
+                            <span id="limiarValor">128</span>
+                        </div>
+                        <div class="info-text">Valores baixos = corta mais áreas escuras</div>
+                    </div>
+
+                    <!-- SEÇÃO: AÇÕES -->
                     <div class="section actions">
                         <button id="resetBtn" class="btn-secondary">⟳ Resetar tudo</button>
                         <button id="gerarBtn" class="btn-primary">🚀 GERAR G-CODE</button>
@@ -141,19 +149,19 @@
                 </div>
             </div>
 
-            <!-- Área Principal (Visualização + Resultados) -->
+            <!-- ========== ÁREA PRINCIPAL ========== -->
             <div class="main-area">
-                <!-- Visualizador 3D -->
+                
+                <!-- ========== VISUALIZADOR 3D ========== -->
                 <div class="viewer-container">
                     <div class="viewer-toolbar">
-                        <span class="viewer-title">🎨 Visualização 3D</span>
+                        <span class="viewer-title">🎨 Visualização 3D da Trajetória</span>
                         <div class="viewer-controls">
-                            <button id="view-top" title="Topo">🔝</button>
-                            <button id="view-front" title="Frente">⬅️</button>
-                            <button id="view-side" title="Lado">➡️</button>
-                            <button id="view-iso" title="Isométrico">🎯</button>
-                            <button id="reset-view" title="Resetar câmera">🔄</button>
-                            <button id="toggleGrid" title="Alternar grid">📊</button>
+                            <button id="view-top" title="Vista superior">🔝 Topo</button>
+                            <button id="view-front" title="Vista frontal">⬅️ Frente</button>
+                            <button id="view-side" title="Vista lateral">➡️ Lado</button>
+                            <button id="view-iso" title="Vista isométrica">🎯 Isométrico</button>
+                            <button id="reset-view" title="Resetar câmera">🔄 Reset</button>
                         </div>
                     </div>
                     <div id="canvas-container">
@@ -165,28 +173,28 @@
                     </div>
                 </div>
 
-                <!-- Resultados -->
+                <!-- ========== RESULTADOS (G-CODE) ========== -->
                 <div class="results-container" id="resultsContainer" style="display: none;">
                     <div class="results-header">
-                        <span>📋 Resultado</span>
+                        <span>📋 G-CODE GERADO</span>
                         <div class="results-stats">
                             <span class="stat">📄 <span id="totalLinhas">0</span> linhas</span>
                             <span class="stat">✂️ <span id="movimentosCorte">0</span> cortes</span>
                             <span class="stat">⏱️ <span id="tempoEstimado">0</span> min</span>
                         </div>
                         <div class="results-actions">
-                            <button id="copiarBtn" class="icon-btn" title="Copiar">📋</button>
-                            <button id="baixarBtn" class="icon-btn" title="Baixar">💾</button>
+                            <button id="copiarBtn" class="icon-btn" title="Copiar">📋 Copiar</button>
+                            <button id="baixarBtn" class="icon-btn" title="Baixar">💾 Baixar</button>
                         </div>
                     </div>
                     <div class="gcode-output" id="gcodeOutput">
-                        <div class="placeholder">Aguardando geração...</div>
+                        <div class="placeholder">⚙️ Aguardando geração...</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Footer -->
+        <!-- ========== RODAPÉ ========== -->
         <footer>
             <span>CNC Pro © 2026</span>
             <span>|</span>
@@ -196,6 +204,6 @@
         </footer>
     </div>
 
-    <script src="script.js" type="module"></script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>
