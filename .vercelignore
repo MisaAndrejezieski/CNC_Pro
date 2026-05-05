@@ -1,10 +1,19 @@
-# Ignorar arquivos desnecessários
-.venv/
-__pycache__/
-*.pyc
-.git/
-output/
+# Pastas locais
 images/
-cnc_pro.log
-README.md
+output/
+.venv/
+src/
+templates/
+tests/
+
+# Arquivos locais
 .gitattributes
+.gitignore
+*.log
+*.py
+*.pyc
+__pycache__/
+
+# IDE
+.vscode/
+.idea/
