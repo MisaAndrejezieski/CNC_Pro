@@ -1,23 +1,31 @@
-// static/script.js - Lógica com foco em usinagem real
+/**
+ * CNC Pro - Frontend JavaScript
+ * Gerencia a interface do usuário, comunicação com a API e visualização 3D
+ * 
+ * @author CNC Pro
+ * @version 2.0
+ */
 
+// ========== IMPORTAÇÕES ==========
 import { GCodeViewer3D } from './viewer3d.js';
 
-// Elementos
+// ========== DOM ELEMENTS ==========
+// Upload e imagem
 const uploadArea = document.getElementById('uploadArea');
 const fileInput = document.getElementById('fileInput');
 const previewContainer = document.getElementById('previewContainer');
 const preview = document.getElementById('preview');
 const removeImg = document.getElementById('removeImg');
+
+// Botões principais
 const gerarBtn = document.getElementById('gerarBtn');
 const resetBtn = document.getElementById('resetBtn');
 const baixarBtn = document.getElementById('baixarBtn');
 const copiarBtn = document.getElementById('copiarBtn');
 const toggleSidebar = document.getElementById('toggleSidebar');
 const sidebar = document.getElementById('sidebar');
-const resultsContainer = document.getElementById('resultsContainer');
-const gcodeOutput = document.getElementById('gcodeOutput');
 
-// Inputs
+// Inputs de configuração
 const larguraInput = document.getElementById('largura');
 const alturaInput = document.getElementById('altura');
 const profundidadeInput = document.getElementById('profundidade');
@@ -26,37 +34,86 @@ const velocidadeCorteInput = document.getElementById('velocidadeCorte');
 const passoCorteInput = document.getElementById('passoCorte');
 const resolucaoInput = document.getElementById('resolucao');
 const resolucaoValor = document.getElementById('resolucaoValor');
+const limiarInput = document.getElementById('limiar');
+const limiarValor = document.getElementById('limiarValor');
 
-let currentImage = null;
-let currentGcode = null;
-let viewer3D = null;
-let estrategiaAtual = 'pocket';
+// Elementos de UI
+const resultsContainer = document.getElementById('resultsContainer');
+const gcodeOutput = document.getElementById('gcodeOutput');
+const viewerPlaceholder = document.getElementById('viewerPlaceholder');
 
-// Inicializa visualizador
+// ========== VARIÁVEIS GLOBAIS ==========
+let currentImage = null;      // Imagem atual em base64
+let currentGcode = null;      // G-code gerado atualmente
+let viewer3D = null;          // Instância do visualizador 3D
+let estrategiaAtual = 'pocket'; // Estratégia de usinagem atual
+
+// ========== INICIALIZAÇÃO ==========
+// Atualiza valores dos ranges
+resolucaoInput.addEventListener('input', () => {
+    resolucaoValor.textContent = resolucaoInput.value;
+});
+
+limiarInput.addEventListener('input', () => {
+    limiarValor.textContent = limiarInput.value;
+});
+
+// Detecta mudança na estratégia
+document.querySelectorAll('input[name="estrategia"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            estrategiaAtual = e.target.value;
+            const nomes = {
+                pocket: 'Escavação (Pocket)',
+                profile: 'Perfil (Profile)',
+                zigzag: 'Zig-Zag'
+            };
+            document.getElementById('modoAtual').textContent = nomes[estrategiaAtual];
+        }
+    });
+});
+
+// Atualiza info da ferramenta
+diametroInput.addEventListener('input', () => {
+    document.getElementById('ferramentaInfo').textContent = `${diametroInput.value} mm`;
+});
+
+// Atualiza info de passes
+function atualizarInfoPasses() {
+    const profundidade = parseFloat(profundidadeInput.value);
+    const passo = parseFloat(passoCorteInput.value);
+    const passes = Math.ceil(profundidade / passo);
+    document.getElementById('infoPasses').textContent = `Serão feitos ${passes} passes de ${passo} mm cada`;
+}
+
+profundidadeInput.addEventListener('input', atualizarInfoPasses);
+passoCorteInput.addEventListener('input', atualizarInfoPasses);
+atualizarInfoPasses();
+
+// ========== INICIALIZAÇÃO DO VISUALIZADOR 3D ==========
 setTimeout(() => {
     const container = document.getElementById('canvas-container');
     if (container) {
         viewer3D = new GCodeViewer3D('canvas-container');
-        document.getElementById('viewerPlaceholder')?.remove();
+        if (viewerPlaceholder) viewerPlaceholder.style.display = 'none';
         
-        // Botões do visualizador
+        // Configura botões do visualizador
         document.getElementById('view-top')?.addEventListener('click', () => viewer3D.setView('top'));
         document.getElementById('view-front')?.addEventListener('click', () => viewer3D.setView('front'));
         document.getElementById('view-side')?.addEventListener('click', () => viewer3D.setView('side'));
         document.getElementById('view-iso')?.addEventListener('click', () => viewer3D.setView('iso'));
         document.getElementById('reset-view')?.addEventListener('click', () => viewer3D.resetView());
-        document.getElementById('toggleGrid')?.addEventListener('click', () => viewer3D.toggleGrid());
     }
 }, 100);
 
-// Sidebar toggle
+// ========== SIDEBAR TOGGLE ==========
 toggleSidebar?.addEventListener('click', () => {
     sidebar.classList.toggle('collapsed');
     toggleSidebar.textContent = sidebar.classList.contains('collapsed') ? '▶' : '◀';
     setTimeout(() => viewer3D?.onResize(), 300);
 });
 
-// Upload
+// ========== UPLOAD DE IMAGEM ==========
 uploadArea.addEventListener('click', () => fileInput.click());
 uploadArea.addEventListener('dragover', (e) => e.preventDefault());
 uploadArea.addEventListener('drop', (e) => {
@@ -64,6 +121,7 @@ uploadArea.addEventListener('drop', (e) => {
     const file = e.dataTransfer.files[0];
     if (file?.type.startsWith('image/')) handleImage(file);
 });
+
 fileInput.addEventListener('change', (e) => {
     if (e.target.files[0]) handleImage(e.target.files[0]);
 });
@@ -72,6 +130,8 @@ removeImg?.addEventListener('click', () => {
     currentImage = null;
     previewContainer.style.display = 'none';
     uploadArea.style.display = 'block';
+    if (viewer3D) viewer3D.clear();
+    resultsContainer.style.display = 'none';
 });
 
 function handleImage(file) {
@@ -85,42 +145,9 @@ function handleImage(file) {
     reader.readAsDataURL(file);
 }
 
-// Resolução range
-resolucaoInput?.addEventListener('input', () => {
-    resolucaoValor.textContent = resolucaoInput.value;
-});
-
-// Passo de corte
-passoCorteInput?.addEventListener('input', () => {
-    const profundidade = parseFloat(profundidadeInput.value);
-    const passo = parseFloat(passoCorteInput.value);
-    const passes = Math.ceil(profundidade / passo);
-    document.getElementById('infoPasses').textContent = `Serão feitos ${passes} passes`;
-});
-
-// Estratégia
-document.querySelectorAll('input[name="estrategia"]').forEach(radio => {
-    radio.addEventListener('change', (e) => {
-        if (e.target.checked) {
-            estrategiaAtual = e.target.value;
-            const nomes = {
-                pocket: 'Escavação (Pocket)',
-                profile: 'Perfil (Profile)',
-                contour: 'Contorno',
-                zigzag: 'Zig-Zag'
-            };
-            document.getElementById('modoAtual').textContent = nomes[estrategiaAtual];
-        }
-    });
-});
-
-// Ferramenta info
-diametroInput?.addEventListener('input', () => {
-    document.getElementById('ferramentaInfo').textContent = `${diametroInput.value} mm`;
-});
-
-// Reset
+// ========== RESETAR CONFIGURAÇÕES ==========
 resetBtn?.addEventListener('click', () => {
+    // Reset dos inputs
     larguraInput.value = '100';
     alturaInput.value = '100';
     profundidadeInput.value = '3';
@@ -129,22 +156,32 @@ resetBtn?.addEventListener('click', () => {
     passoCorteInput.value = '0.5';
     resolucaoInput.value = '15';
     resolucaoValor.textContent = '15';
+    limiarInput.value = '128';
+    limiarValor.textContent = '128';
+    
+    // Reset da estratégia
     document.querySelector('input[value="pocket"]').checked = true;
     estrategiaAtual = 'pocket';
     document.getElementById('modoAtual').textContent = 'Escavação (Pocket)';
     document.getElementById('ferramentaInfo').textContent = '3.175 mm';
+    
+    // Reset da imagem
     currentImage = null;
     previewContainer.style.display = 'none';
     uploadArea.style.display = 'block';
+    
+    // Reset dos resultados
     currentGcode = null;
     resultsContainer.style.display = 'none';
     if (viewer3D) viewer3D.clear();
+    
+    atualizarInfoPasses();
 });
 
-// Gerar G-code
+// ========== GERAR G-CODE ==========
 gerarBtn?.addEventListener('click', async () => {
     if (!currentImage) {
-        alert('Selecione uma imagem primeiro!');
+        alert('❌ Selecione uma imagem primeiro!');
         return;
     }
     
@@ -160,6 +197,7 @@ gerarBtn?.addEventListener('click', async () => {
         velocidade_corte: parseFloat(velocidadeCorteInput.value),
         passo_corte: parseFloat(passoCorteInput.value),
         resolucao: parseFloat(resolucaoInput.value),
+        limiar: parseInt(limiarInput.value),
         estrategia: estrategiaAtual
     };
     
@@ -174,59 +212,9 @@ gerarBtn?.addEventListener('click', async () => {
         
         if (result.success) {
             currentGcode = result.gcode;
-            gcodeOutput.innerHTML = `<pre style="margin:0">${escapeHtml(result.gcode)}</pre>`;
             
-            document.getElementById('totalLinhas').textContent = result.linhas.toLocaleString();
-            document.getElementById('movimentosCorte').textContent = result.movimentos_corte.toLocaleString();
+            // Exibe o G-code
+            gcodeOutput.innerHTML = `<pre style="margin:0; white-space:pre-wrap; font-family:monospace; font-size:11px;">${escapeHtml(result.gcode)}</pre>`;
             
-            const tempo = Math.ceil(result.movimentos_corte / 800 * 0.1);
-            document.getElementById('tempoEstimado').textContent = tempo;
-            
-            resultsContainer.style.display = 'flex';
-            
-            if (viewer3D && currentGcode) {
-                viewer3D.loadGCode(currentGcode);
-            }
-            
-            baixarBtn.disabled = false;
-            copiarBtn.disabled = false;
-        } else {
-            alert('Erro: ' + result.error);
-        }
-    } catch (error) {
-        alert('Erro: ' + error.message);
-    } finally {
-        gerarBtn.disabled = false;
-        gerarBtn.textContent = '🚀 GERAR G-CODE';
-    }
-});
-
-// Baixar
-baixarBtn?.addEventListener('click', () => {
-    if (!currentGcode) return;
-    const blob = new Blob([currentGcode], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'projeto_cnc.nc';
-    a.click();
-    URL.revokeObjectURL(url);
-});
-
-// Copiar
-copiarBtn?.addEventListener('click', async () => {
-    if (!currentGcode) return;
-    await navigator.clipboard.writeText(currentGcode);
-    alert('G-code copiado!');
-});
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// Atualiza info de passes
-passoCorteInput.dispatchEvent(new Event('input'));
-profundidadeInput.addEventListener('input', () => passoCorteInput.dispatchEvent(new Event('input')));
-diametroInput.dispatchEvent(new Event('input'));
+            // Atualiza estatísticas
+            document.getElementById
