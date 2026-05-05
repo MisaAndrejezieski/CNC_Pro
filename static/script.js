@@ -215,6 +215,76 @@ gerarBtn?.addEventListener('click', async () => {
             
             // Exibe o G-code
             gcodeOutput.innerHTML = `<pre style="margin:0; white-space:pre-wrap; font-family:monospace; font-size:11px;">${escapeHtml(result.gcode)}</pre>`;
-            
+        
             // Atualiza estatísticas
-            document.getElementById
+            document.getElementById('totalLinhas').textContent = result.linhas.toLocaleString();
+            document.getElementById('movimentosCorte').textContent = result.movimentos_corte.toLocaleString();
+            
+            // Calcula tempo estimado (baseado em 800mm/min de velocidade média)
+            const tempoEstimado = Math.ceil((result.movimentos_corte * 0.05) / 60);
+            document.getElementById('tempoEstimado').textContent = tempoEstimado;
+            
+            // Mostra o container de resultados
+            resultsContainer.style.display = 'flex';
+            
+            // Carrega no visualizador 3D
+            if (viewer3D && currentGcode) {
+                viewer3D.clear();
+                viewer3D.loadGCode(currentGcode);
+                if (viewerPlaceholder) viewerPlaceholder.style.display = 'none';
+            }
+            
+            // Habilita botões de download
+            baixarBtn.disabled = false;
+            copiarBtn.disabled = false;
+            
+        } else {
+            alert('❌ Erro: ' + (result.error || 'Falha ao gerar G-code'));
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('❌ Erro ao conectar com o servidor: ' + error.message);
+    } finally {
+        gerarBtn.disabled = false;
+        gerarBtn.textContent = '🚀 GERAR G-CODE';
+    }
+});
+
+// ========== BAIXAR G-CODE ==========
+baixarBtn?.addEventListener('click', () => {
+    if (!currentGcode) return;
+    
+    const blob = new Blob([currentGcode], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cnc_pro_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.nc`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+});
+
+// ========== COPIAR G-CODE ==========
+copiarBtn?.addEventListener('click', async () => {
+    if (!currentGcode) return;
+    
+    try {
+        await navigator.clipboard.writeText(currentGcode);
+        alert('✅ G-code copiado para a área de transferência!');
+    } catch (err) {
+        alert('❌ Erro ao copiar: ' + err.message);
+    }
+});
+
+// ========== UTILITÁRIOS ==========
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ========== VALORES INICIAIS ==========
+atualizarInfoPasses();
+document.getElementById('ferramentaInfo').textContent = '3.175 mm';
+document.getElementById('modoAtual').textContent = 'Escavação (Pocket)';
