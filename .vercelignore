@@ -1,0 +1,23 @@
+# Pastas locais
+.venv/
+node_modules/
+.vercel/
+.vscode/
+.idea/
+
+# Arquivos locais
+.gitattributes
+.gitignore
+*.log
+*.py
+*.pyc
+__pycache__/
+
+# Documentação
+README.md
+LICENSE
+
+# Imagens e outputs locais
+images/
+output/
+uploads/
