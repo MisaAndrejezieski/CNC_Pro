@@ -1,0 +1,17 @@
+{
+  "name": "cnc-pro",
+  "version": "2.0.0",
+  "description": "CNC Pro - Gerador de G-code profissional a partir de imagens",
+  "type": "module",
+  "main": "api/gerar.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "sharp": "^0.32.6"
+  },
+  "keywords": ["cnc", "gcode", "cam", "router", "engraving"],
+  "author": "CNC Pro",
+  "license": "MIT"
+}
