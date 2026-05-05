@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNC Pro - Gerador de G-code Profissional</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Import Three.js para o visualizador 3D -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛠️ CNC Pro</h1>
+            <p class="subtitle">Gerador de G-code profissional a partir de imagens</p>
+            <div class="badge">🚀 Online</div>
+        </header>
+        
+        <div class="main-grid">
+            <!-- Painel Esquerdo - Configurações -->
+            <div class="panel">
+                <h2>📸 Configurações</h2>
+                
+                <div class="upload-area" id="uploadArea">
+                    <div>📤 Clique ou arraste uma imagem aqui</div>
+                    <div class="small">PNG, JPG, JPEG, BMP</div>
+                </div>
+                <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                <img id="preview" class="preview-image" style="display: none;">
+                
+                <div class="settings">
+                    <h3>📏 Dimensões</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Largura (mm)</label>
+                            <input type="number" id="largura" value="100" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Altura (mm)</label>
+                            <input type="number" id="altura" value="100" step="1">
+                        </div>
+                    </div>
+                    
+                    <h3>⚙️ Corte</h3>
+                    <div class="form-group">
+                        <label>Profundidade (mm)</label>
+                        <input type="number" id="profundidade" value="3" step="0.5">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Resolução (passos/mm)</label>
+                        <input type="range" id="resolucao" min="1" max="50" value="10">
+                        <span id="resolucaoValor">10</span>
+                        <div class="hint">Maior = mais detalhes, arquivo maior</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Limiar (0-255)</label>
+                        <input type="range" id="limiar" min="0" max="255" value="128">
+                        <span id="limiarValor">128</span>
+                        <div class="hint">Valores baixos = corta mais áreas escuras</div>
+                    </div>
+                    
+                    <h3>⚡ Performance</h3>
+                    <div class="form-group">
+                        <label>Qualidade</label>
+                        <select id="qualidade">
+                            <option value="rapido">🚀 Rápido (menos detalhes)</option>
+                            <option value="normal" selected>⚖️ Normal</option>
+                            <option value="alto">🎨 Alta qualidade</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Passo de varredura (mm)</label>
+                        <input type="number" id="passoVarredura" value="0.5" step="0.1" min="0.1" max="2">
+                        <div class="hint">Menor = mais detalhes, porém mais lento</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="otimizarCaminho" checked>
+                            🔄 Otimizar caminho (recomendado)
+                        </label>
+                    </div>
+                </div>
+                
+                <button id="gerarBtn">🚀 GERAR G-CODE</button>
+                
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+            
+            <!-- Painel Direito - Resultados -->
+            <div class="panel">
+                <h2>📋 Resultado</h2>
+                
+                <div class="stats" id="stats" style="display: none;">
+                    <div class="stat-card">
+                        <div>📄 Linhas</div>
+                        <div class="stat-value" id="totalLinhas">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div>✂️ Cortes</div>
+                        <div class="stat-value" id="movimentosCorte">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div>💨 Rápidos</div>
+                        <div class="stat-value" id="movimentosRapidos">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div>📏 Profundidade</div>
+                        <div class="stat-value" id="profundidadeMax">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div>🔄 Passes</div>
+                        <div class="stat-value" id="numPasses">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div>📐 Resolução</div>
+                        <div class="stat-value" id="resolucaoFinal">0</div>
+                    </div>
+                </div>
+                
+                <!-- Abas -->
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="gcode">📝 G-code</button>
+                    <button class="tab-btn" data-tab="viewer3d">🎨 Visualização 3D</button>
+                </div>
+                
+                <!-- Aba G-code -->
+                <div id="tab-gcode" class="tab-content active">
+                    <div class="gcode-output" id="gcodeOutput">
+                        <div class="placeholder">⚙️ Aguardando geração...</div>
+                    </div>
+                </div>
+                
+                <!-- Aba Visualização 3D -->
+                <div id="tab-viewer3d" class="tab-content">
+                    <div id="canvas-container" style="width: 100%; height: 450px; background: #1a1a2e; border-radius: 10px; overflow: hidden;">
+                        <canvas id="viewer-canvas"></canvas>
+                    </div>
+                    <div class="viewer-controls">
+                        <button id="view-top" class="small-btn">🔝 Topo</button>
+                        <button id="view-front" class="small-btn">⬅️ Frente</button>
+                        <button id="view-side" class="small-btn">➡️ Lado</button>
+                        <button id="view-iso" class="small-btn">🎯 Isométrico</button>
+                        <button id="reset-view" class="small-btn">🔄 Reset</button>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="baixarBtn" disabled>💾 Baixar G-code</button>
+                    <button id="copiarBtn" disabled>📋 Copiar</button>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>CNC Pro © 2026 - Gerador de G-code profissional | Visualização 3D integrada</p>
+        </footer>
+    </div>
+    
+    <script src="script.js" type="module"></script>
+</body>
+</html>
